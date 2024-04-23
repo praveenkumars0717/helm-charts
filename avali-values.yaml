@@ -1,0 +1,86 @@
+# Default values for microservice-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: hello-world
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: ""
+
+namespace: dev
+
+nameOverride: ""
+
+fullnameOverride: "helloworld"
+
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 95
+  targetMemoryUtilizationPercentage: 95
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+livenessProbe: {}
+  # path : /
+  # port: 80
+
+readinessProbe: {}
+  # path : /
+  # port: 80
+
+container:
+  port: 8080
+
+#config:
+#   TEST_ME : "true"
+#   test: one
+
+global:
+  config: {}
