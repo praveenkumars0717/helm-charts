@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "microservice-chart.fullname" . }}
+  labels:
+    {{- include "microservice-chart.labels" . | nindent 4 }}
+    valuesHash: {{ include "microservice-chart.valuesHash" . }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "microservice-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }} 
+      {{- end }}
+      labels:
+        {{- include "microservice-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets }}
+      serviceAccountName: {{ include "microservice-chart.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: postgres-container
+          env:
+            - name: DB_USER
+              value: {{ .Values.database_usr }}
+            - name: DB_PASSWORD
+              value: {{ .Values.database_psw }}
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.database_url }}/{{ .Values.database }}
+            - name: LH_PORTAL_URL
+              value: {{ .Values.lh_portal_url }}
+            - name: LH_AVAILABILITY_URL
+              value: {{ .Values.lh_availability_url }}
+            - name: LH_BOOKING_URL
+              value: {{ .Values.lh_booking_url }}
+            - name: LH_PAYMENTS_URL
+              value: {{ .Values.lh_payments_url }}
+            - name: LH_REVIEW_RATINGS_URL
+              value: {{ .Values.lh_review_ratings_url }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: {{ .Values.container.port | default 8080 }}
+              protocol: TCP
+          {{ if .Values.livenessProbe }}     
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path | default "/" }}
+              port: {{ .Values.livenessProbe.port | default 8080 }}
+          {{ end }} 
+          {{ if .Values.readinessProbe }}  
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path | default "/" }}
+              port: {{ .Values.readinessProbe.port | default 8080 }}
+          {{ end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
